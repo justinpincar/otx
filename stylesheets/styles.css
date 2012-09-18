@@ -1,0 +1,15 @@
+.background {
+  fill: #f5fafd;
+  pointer-events: all;
+}
+
+#countries {
+  fill: #aaa;
+  stroke: #fff;
+  stroke-width: 1.5px;
+}
+
+#countries .active {
+  fill: steelblue;
+}
+
