@@ -53,5 +53,11 @@ function click(d) {
       .duration(1000)
       .attr("transform", "scale(" + k + ")translate(" + x + "," + y + ")")
       .style("stroke-width", 1.5 / k + "px");
+
+  var labels = d3.select("body").selectAll("p")
+      .data([d.id])
+      .text(function(d) { return d; });
+    labels.enter().append("p").text(function(d) { return d; });
+    labels.exit().remove();
 }
 
