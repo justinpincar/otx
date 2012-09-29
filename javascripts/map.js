@@ -76,17 +76,25 @@ function click(d) {
     return;
   }
 
-  $.getJSON('json/countries/' + full_name.replace(" ", "_") + '/activities.json', function(json) {
-    var labels = d3.select("body").selectAll("p")
-    .data([d.id + ":" + iso2 + ":" + name])
-    .text(function(d) { return d; });
-    labels.enter().append("p").text(function(d) { return d; });
-    labels.exit().remove();
+  var labels = d3.select("body").selectAll("p")
+  .data([d.id + ":" + iso2 + ":" + name])
+  .text(function(d) { return d; });
+  labels.enter().append("p").text(function(d) { return d; });
+  labels.exit().remove();
 
+  $.getJSON('json/countries/' + full_name.replace(" ", "_") + '/activities.json', function(json) {
     var labels = d3.select("ul.activities").selectAll("li")
     .data(json)
     .text(function(d) { return d.name + ":" + d.number; });
     labels.enter().append("p").text(function(d) { return d.name + ":" + d.number; });
+    labels.exit().remove();
+  });
+
+  $.getJSON('json/countries/' + full_name.replace(" ", "_") + '/ips.json', function(json) {
+    var labels = d3.select("ul.ips").selectAll("li")
+    .data(json)
+    .text(function(d) { return d.ip + ":" + d.malicious_activities; });
+    labels.enter().append("p").text(function(d) { return d.ip + ":" + d.malicious_activities; });
     labels.exit().remove();
   });
 }
