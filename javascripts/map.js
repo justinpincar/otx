@@ -31,6 +31,11 @@ d3.json("data/countries.geo.json", function(json) {
       .on("click", click);
 });
 
+$.getJSON('json/countries/reference.json', function(json) {
+  REFERENCE_JSON = json;
+  $("body").show();
+});
+
 function click(d) {
   var x = 0,
       y = 0,
@@ -54,11 +59,36 @@ function click(d) {
       .attr("transform", "scale(" + k + ")translate(" + x + "," + y + ")")
       .style("stroke-width", 1.5 / k + "px");
 
-  var labels = d3.select("body").selectAll("p")
-      .data([d.id + ": " + ISO_MAP[d.id]])
-      .text(function(d) { return d; });
+  var iso2 = ISO_MAP[d.id];
+
+  var name = null;
+  for (var i=0; i<REFERENCE_JSON.length; i++) {
+    var item = REFERENCE_JSON[i];
+    var full_name = item["name"];
+    if (full_name.substring(0, 2) == iso2) {
+      name = full_name;
+      break;
+    }
+  }
+
+  if (name == null) {
+    console.log("Country " + iso2 + " not found in reference json");
+    return;
+  }
+
+  $.getJSON('json/countries/' + full_name.replace(" ", "_") + '/activities.json', function(json) {
+    var labels = d3.select("body").selectAll("p")
+    .data([d.id + ":" + iso2 + ":" + name])
+    .text(function(d) { return d; });
     labels.enter().append("p").text(function(d) { return d; });
     labels.exit().remove();
+
+    var labels = d3.select("ul.activities").selectAll("li")
+    .data(json)
+    .text(function(d) { return d.name + ":" + d.number; });
+    labels.enter().append("p").text(function(d) { return d.name + ":" + d.number; });
+    labels.exit().remove();
+  });
 }
 
 var ISO_MAP = {
