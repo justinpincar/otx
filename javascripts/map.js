@@ -1,6 +1,6 @@
 var width = 580,
     height = 500,
-    centered;
+    centered, last_d;
 
 var projection = d3.geo.mercator()
     .translate([0, 0]);
@@ -8,7 +8,7 @@ var projection = d3.geo.mercator()
 var path = d3.geo.path()
     .projection(projection);
 
-var svg = d3.select("body").append("svg")
+var svg = d3.select("#map_container").append("svg")
     .attr("width", width)
     .attr("height", height);
 
@@ -33,6 +33,7 @@ d3.json("data/countries.geo.json", function(json) {
 
 $.getJSON('json/countries/reference.json', function(json) {
   REFERENCE_JSON = json;
+  doGlobal();
   $("body").show();
 });
 
@@ -61,42 +62,76 @@ function click(d) {
 
   var iso2 = ISO_MAP[d.id];
 
-  var name = null;
-  for (var i=0; i<REFERENCE_JSON.length; i++) {
-    var item = REFERENCE_JSON[i];
-    var full_name = item["name"];
-    if (full_name.substring(0, 2) == iso2) {
-      name = full_name;
-      break;
+  if (d == last_d) {
+    last_d = null;
+    doGlobal();
+  } else {
+    last_d = d;
+
+    var name = null;
+    for (var i=0; i<REFERENCE_JSON.length; i++) {
+      var item = REFERENCE_JSON[i];
+      var full_name = item["name"];
+      if (full_name.substring(0, 2) == iso2) {
+        name = full_name;
+        break;
+      }
     }
-  }
 
-  if (name == null) {
-    console.log("Country " + iso2 + " not found in reference json");
-    return;
-  }
+    if (name == null) {
+      console.log("Country " + iso2 + " not found in reference json");
+      return;
+    }
 
-  var labels = d3.select("body").selectAll("p")
-  .data([d.id + ":" + iso2 + ":" + name])
-  .text(function(d) { return d; });
-  labels.enter().append("p").text(function(d) { return d; });
+    $("#map_label").text(d.id + ":" + iso2 + ":" + name);
+    $.getJSON('json/countries/' + full_name.replace(" ", "_") + '/activities.json', redrawActivity);
+    $.getJSON('json/countries/' + full_name.replace(" ", "_") + '/ips.json', redrawIps);
+  }
+}
+
+function doGlobal() {
+    $("#map_label").text("Overall");
+    $.get('csv/top_activity.csv', function(csv) {
+      dataArray = $.csv2Array(csv);
+
+      var data = [];
+      for (var i=0; i<dataArray.length; i++) {
+        var line = dataArray[i];
+        if (line.length == 3) {
+          data.push({name: line[1], number: line[2]});
+        }
+      }
+      redrawActivity(data);
+    });
+
+    $.get('csv/mostwanted_ip.csv', function(csv) {
+      dataArray = $.csv2Array(csv);
+
+      var data = [];
+      for (var i=0; i<dataArray.length; i++) {
+        var line = dataArray[i];
+        if (line.length == 3) {
+          data.push({ip: line[1], malicious_activities: line[2]});
+        }
+      }
+      redrawIps(data);
+    });
+}
+
+function redrawActivity(data) {
+  var labels = d3.select("ul#activities").selectAll("li")
+  .data(data)
+  .text(function(d) { return d.name + ": " + d.number; });
+  labels.enter().append("li").text(function(d) { return d.name + ": " + d.number; });
   labels.exit().remove();
+}
 
-  $.getJSON('json/countries/' + full_name.replace(" ", "_") + '/activities.json', function(json) {
-    var labels = d3.select("ul.activities").selectAll("li")
-    .data(json)
-    .text(function(d) { return d.name + ":" + d.number; });
-    labels.enter().append("p").text(function(d) { return d.name + ":" + d.number; });
-    labels.exit().remove();
-  });
-
-  $.getJSON('json/countries/' + full_name.replace(" ", "_") + '/ips.json', function(json) {
-    var labels = d3.select("ul.ips").selectAll("li")
-    .data(json)
-    .text(function(d) { return d.ip + ":" + d.malicious_activities; });
-    labels.enter().append("p").text(function(d) { return d.ip + ":" + d.malicious_activities; });
-    labels.exit().remove();
-  });
+function redrawIps(data) {
+  var labels = d3.select("ul#ips").selectAll("li")
+  .data(data)
+  .text(function(d) { return d.ip + ": " + d.malicious_activities; });
+  labels.enter().append("li").text(function(d) { return d.ip + ": " + d.malicious_activities; });
+  labels.exit().remove();
 }
 
 var ISO_MAP = {

@@ -1,3 +1,7 @@
+body svg {
+
+}
+
 .background {
   fill: #f5fafd;
   pointer-events: all;
