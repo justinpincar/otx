@@ -37,6 +37,16 @@ $.getJSON('json/countries/reference.json', function(json) {
   $("body").show();
 });
 
+$.getJSON('json/otx/today.json', function(json) {
+  TODAY_JSON = json;
+  redrawDailyGlobal();
+});
+
+$.getJSON('json/otx/week.json', function(json) {
+  WEEK_JSON = json;
+  redrawWeeklyGlobal();
+});
+
 function click(d) {
   var x = 0,
       y = 0,
@@ -65,6 +75,8 @@ function click(d) {
   if (d == last_d) {
     last_d = null;
     doGlobal();
+    redrawWeeklyGlobal();
+    redrawDailyGlobal();
   } else {
     last_d = d;
 
@@ -79,13 +91,15 @@ function click(d) {
     }
 
     if (name == null) {
-      console.log("Country " + iso2 + " not found in reference json");
+      alert("Country " + iso2 + " not found in reference json");
       return;
     }
 
     $("#map_label").text(d.id + ":" + iso2 + ":" + name);
-    $.getJSON('json/countries/' + full_name.replace(" ", "_") + '/activities.json', redrawActivity);
-    $.getJSON('json/countries/' + full_name.replace(" ", "_") + '/ips.json', redrawIps);
+    $.getJSON('json/countries/' + full_name.replace(/ /g, "_") + '/activities.json', redrawActivity);
+    $.getJSON('json/countries/' + full_name.replace(/ /g, "_") + '/ips.json', redrawIps);
+    redrawWeekly(full_name);
+    redrawDaily(full_name);
   }
 }
 
@@ -132,6 +146,43 @@ function redrawIps(data) {
   .text(function(d) { return d.ip + ": " + d.malicious_activities; });
   labels.enter().append("li").text(function(d) { return d.ip + ": " + d.malicious_activities; });
   labels.exit().remove();
+}
+
+function redrawWeeklyGlobal() {
+  var data = [WEEK_JSON[0]["last_week_otx_users"]];
+  var weekly = d3.select("#weekly_contributors").selectAll("li")
+  .data(data)
+  .text(data);
+  weekly.enter().append("li").text(data);
+  weekly.exit().remove();
+}
+
+function redrawDailyGlobal() {
+  var data = [TODAY_JSON[0]["today_otx_users"]];
+  var daily = d3.select("#daily_contributors").selectAll("li")
+  .data(data)
+  .text(data);
+  daily.enter().append("li").text(data);
+  daily.exit().remove();
+}
+
+function redrawWeekly(full_name) {
+  var data = [WEEK_JSON[1]["last_week_otx_users_geolocation_data"][full_name]];
+  var weekly = d3.select("#weekly_contributors").selectAll("li")
+  .data(data)
+  .text(data);
+  weekly.enter().append("li").text(data);
+  weekly.exit().remove();
+
+}
+
+function redrawDaily(full_name) {
+  var data = [TODAY_JSON[1]["today_otx_users_geolocation_data"][full_name]];
+  var daily = d3.select("#daily_contributors").selectAll("li")
+  .data(data)
+  .text(data);
+  daily.enter().append("li").text(data);
+  daily.exit().remove();
 }
 
 var ISO_MAP = {
